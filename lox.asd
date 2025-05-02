@@ -5,7 +5,9 @@
   :depends-on (:str :serapeum :iterate)
   :components ((:module "src"
                 :components
-                ((:file "main"))))
+                ((:file "main")
+		 (:file "tokens")
+		 (:file "scanner"))))
   :description ""
   :in-order-to ((test-op (test-op "lox/tests"))))
 
