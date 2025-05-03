@@ -59,7 +59,45 @@
 	       (add-token s :slash)))
       ((#\Space #\Return #\Tab) nil)
       (#\Newline (incf (line s)))
-      (otherwise (lox-error (line s) "Unexpected character.")))))
+      (#\" (scan-string s))
+      (otherwise
+       (if (digit-char-p ch)
+	   (scan-number s)
+	   (lox-error (line s) "Unexpected character."))))))
+
+(defmethod scan-number ((s scanner))
+  (iterate:iterate
+    (iterate:while (digit-char-p (peek s)))
+    (advance s))
+
+  ;; Look for a fractional part
+  (when (and (char= (peek s) #\.) (digit-char-p (peek-next s)))
+    (advance s) ; consume the "."
+    (iterate:iterate
+      (iterate:while (digit-char-p (peek s)))
+      (advance s)))
+
+  (with-slots (source current start) s
+    (add-token
+     s
+     :number
+     (serapeum:parse-float (subseq source start current)))))
+
+(defmethod scan-string ((s scanner))
+  (iterate:iterate
+    (iterate:while (and (char/= (peek s) #\") (not (at-end? s))))
+    (when (char= #\Newline (peek s))
+      (incf (line s)))
+    (advance s))
+
+  (when (at-end? s)
+    (lox-error (line s) "Unterminated string.")
+    (return-from scan-string))
+
+  (advance s)				; the closing "
+
+  (let ((value (subseq (source s) (+ (start s) 1) (- (current s) 1))))
+    (add-token s :string value)))
 
 (defmethod match ((s scanner) expected)
   "Advances if current character matches expected."
@@ -69,6 +107,12 @@
 (defmethod peek ((s scanner))
   (if (at-end? s) #\Nul
       (aref (source s) (current s))))
+
+(defmethod peek-next ((s scanner))
+  (with-slots (source current) s
+    (if (>= (+ current 1) (length source))
+	#\Nul
+	(aref source (+ current 1)))))
 
 (defmethod at-end? ((s scanner))
   (>= (current s) (length (source s))))
