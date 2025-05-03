@@ -5,9 +5,10 @@
   :depends-on (:str :serapeum :iterate)
   :components ((:module "src"
                 :components
-                ((:file "main")
-		 (:file "tokens")
-		 (:file "scanner"))))
+                ((:file "tokens")
+		 (:file "errors")
+		 (:file "scanner")
+		 (:file "main"))))
   :description ""
   :in-order-to ((test-op (test-op "lox/tests"))))
 
@@ -18,6 +19,7 @@
                "rove")
   :components ((:module "tests"
                 :components
-                ((:file "main"))))
+                ((:file "scanner")
+		 (:file "main"))))
   :description "Test system for lox"
   :perform (test-op (op c) (symbol-call :rove :run c)))

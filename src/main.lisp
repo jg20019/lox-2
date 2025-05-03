@@ -1,12 +1,14 @@
 (uiop:define-package lox
   (:use #:cl)
+  (:import-from :lox.errors
+		:*had-error*
+		:lox-error
+		:report)
   (:import-from :lox.scanner
 		:new-scanner
 		:scan-tokens))
 
 (in-package #:lox)
-
-(defparameter *had-error* nil "Is true if error has occured")
 
 (defun main (args)
   (cond ((= (length args) 1)
@@ -32,15 +34,3 @@
     (iterate:iterate
       (iterate:for token in tokens)
       (format t "~a~%" token))))
-
-;; Error Handling
-
-(defun lox-error (line message)
-  (report line "" message))
-
-(defun report (line where message)
-  (format
-   *error-output*
-   "[line ~a] Error ~a: ~a" line where message)
-  (finish-output)
-  (setf *had-error* t))
