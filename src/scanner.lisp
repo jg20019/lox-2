@@ -2,10 +2,32 @@
   (:use #:cl)
   (:import-from :lox.tokens :new-token)
   (:import-from :lox.errors :lox-error)
+  (:import-from :serapeum :dict)
   (:export :new-scanner
 	   :scan-tokens))
 
 (in-package #:lox.scanner)
+
+(defparameter *keywords*
+  (dict
+   "and"    :and
+   "class"  :class
+   "else"   :else
+   "false"  :false
+   "for"    :for
+   "fun"    :fun
+   "if"     :if
+   "nil"    :nil
+   "or"     :or
+   "print"  :print
+   "return" :return
+   "super"  :super
+   "this"   :this
+   "true"   :true
+   "var"    :var
+   "while"  :while))
+
+(serapeum:toggle-pretty-print-hash-table t)
 
 (defclass scanner ()
   ((source :initarg :source
@@ -34,7 +56,6 @@
     (incf (current s))
     ch))
 
-
 (defmethod scan-token ((s scanner))
   (let ((ch (advance s)))
     (case ch
@@ -61,9 +82,20 @@
       (#\Newline (incf (line s)))
       (#\" (scan-string s))
       (otherwise
-       (if (digit-char-p ch)
-	   (scan-number s)
-	   (lox-error (line s) "Unexpected character."))))))
+       (cond ((digit-char-p ch) (scan-number s))
+	     ((alpha? ch) (scan-identifier s))
+	     (t (lox-error (line s) "Unexpected character.")))))))
+
+
+(defmethod scan-identifier ((s scanner))
+  (iterate:iterate
+    (iterate:while (alpha-numeric? (peek s)))
+    (advance s))
+
+  (with-slots (source start current) s
+    (let* ((text (subseq source start current))
+	   (token-type (gethash text *keywords* :identifier)))
+      (add-token s token-type))))
 
 (defmethod scan-number ((s scanner))
   (iterate:iterate
@@ -72,7 +104,7 @@
 
   ;; Look for a fractional part
   (when (and (char= (peek s) #\.) (digit-char-p (peek-next s)))
-    (advance s) ; consume the "."
+    (advance s)				; consume the "."
     (iterate:iterate
       (iterate:while (digit-char-p (peek s)))
       (advance s)))
@@ -113,6 +145,12 @@
     (if (>= (+ current 1) (length source))
 	#\Nul
 	(aref source (+ current 1)))))
+
+(defun alpha? (ch)
+  (or (alpha-char-p ch) (char= ch #\_)))
+
+(defun alpha-numeric? (ch)
+  (or (alpha? ch) (digit-char-p ch)))
 
 (defmethod at-end? ((s scanner))
   (>= (current s) (length (source s))))

@@ -42,4 +42,30 @@
   (testing "should not include trailing decimals when scanning numbers"
     (let* ((s (new-scanner "123."))
 	   (tokens (scan-tokens s)))
-      (ok (= (length tokens) 2)))))
+      (ok (= (length tokens) 2))))
+
+  (testing "should scan identifiers"
+    (let* ((s (new-scanner "hello"))
+	   (tokens (scan-tokens s)))
+      (ok (= (length tokens) 1))
+      (ok (equal (token-type (first tokens)) :identifier))
+      (ok (null (literal (first tokens))))
+      (ok (string= (lexeme (first tokens)) "hello"))))
+
+  (testing "should scan identifiers with underscores"
+    (let* ((s (new-scanner "_hel_lo"))
+	   (tokens (scan-tokens s)))
+      (ok (= (length tokens) 1))
+      (ok (equal (token-type (first tokens)) :identifier))))
+
+  (testing "should scan identifiers with numbers"
+    (let* ((s (new-scanner "_hello123"))
+	   (tokens (scan-tokens s)))
+      (ok (= (length tokens) 1))
+      (ok (equal (token-type (first tokens)) :identifier))))
+
+  (testing "should recognize identifiers"
+    (let* ((s (new-scanner "or"))
+	   (tokens (scan-tokens s)))
+      (ok (= (length tokens) 1))
+      (ok (equal (token-type (first tokens)) :or)))))
