@@ -3,34 +3,38 @@
 
 (in-package #:lox.ast)
 
+(defun create-accessors (properties)
+  (mapcar #'(lambda (prop)
+	      `(,prop :initarg ,(alexandria:make-keyword prop)
+		      :accessor ,prop))
+	  properties))
 
-(define-ast expr
-  (binary (left operator right)))
+(defun create-class (base-class class-def)
+  (let* ((class-name (first class-def))
+	 (properties (rest class-def))
+	 (derived-class-name (alexandria:format-symbol *package* "~a-~a" class-name base-class)))
+    `(defclass ,derived-class-name (,base-class)
+      ,@(mapcar #'create-accessors properties))))
 
-(progn
-  (defclass expr () ())
+(defun create-constructor (base-class class-def)
+  (let* ((class-name (first class-def))
+	 (properties (second class-def))
+	 (constructor-name (alexandria:format-symbol *package* "~a-~a" class-name base-class)))
+    `(defun ,constructor-name (&key ,@properties)
+       (make-instance ',constructor-name ,@(apply #'append
+						  (mapcar #'(lambda (p)
+							      (list (alexandria:make-keyword p) p))
+							  properties))))))
 
-  (defclass binary (expr)
-    ((left :initarg :left
-	   :accessor left)
-     (operator :initarg :operator
-	       :accessor operator)
-
-     (right :initarg :right
-	    :accessor right)))
-
-  (defun binary (&key left operator right)
-    (make-instance 'binary :left left :operator operator :right right)))
-
-
-(defmacro define-ast (base-class) &body derived-classes
+(defmacro define-ast (base-class &body derived-classes)
   `(progn
      (defclass ,base-class () ())
+     ,@(mapcar #'(lambda (derived-class) (create-class base-class derived-class)) derived-classes)
+     ,@(mapcar #'(lambda (derived-class) (create-constructor base-class derived-class)) derived-classes)))
 
-     ,@(iterate:iterate
-	 (iterate:for class-def in derived-classes)
-	 ()
-	 )
-     ))
+(define-ast expr
+  (binary (left operator right))
+  (grouping (expression))
+  (literal (value))
+  (unary (operator right)))
 
-(macroexpand-1 '(define-ast expr))
