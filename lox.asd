@@ -7,8 +7,10 @@
                 :components
                 ((:file "tokens")
 		 (:file "ast")
+		 (:file "ast-printer")
 		 (:file "errors")
 		 (:file "scanner")
+		 (:file "parser")
 		 (:file "main"))))
   :description ""
   :in-order-to ((test-op (test-op "lox/tests"))))
