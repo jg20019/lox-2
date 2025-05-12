@@ -6,6 +6,7 @@
   :components ((:module "src"
                 :components
                 ((:file "tokens")
+		 (:file "ast")
 		 (:file "errors")
 		 (:file "scanner")
 		 (:file "main"))))
