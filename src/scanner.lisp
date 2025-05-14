@@ -49,7 +49,11 @@
     (iterate:while (not (at-end? s)))
     (setf (start s) (current s))
     (scan-token s))
-  (reverse (tokens s)))
+  (reverse (cons (new-token :token-type :eof
+			    :lexeme ""
+			    :literal nil
+			    :line (line s))
+		 (tokens s))))
 
 (defmethod advance ((s scanner))
   (let ((ch (aref (source s) (current s))))
