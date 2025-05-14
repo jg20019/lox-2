@@ -6,7 +6,10 @@
 		:report)
   (:import-from :lox.scanner
 		:new-scanner
-		:scan-tokens))
+		:scan-tokens)
+  (:import-from :lox.parser
+		:new-parser
+		:parse))
 
 (in-package #:lox)
 
@@ -30,7 +33,11 @@
 
 (defun run (source)
   (let* ((scanner (new-scanner source))
-	 (tokens (scan-tokens scanner)))
-    (iterate:iterate
-      (iterate:for token in tokens)
-      (format t "~a~%" token))))
+	 (tokens (scan-tokens scanner))
+	 (parser (new-parser tokens))
+	 (expression (parse parser)))
+
+    ;; Stop if there was a syntax error
+    (when *had-error* (return-from run))
+
+    (format t "~a~%" (lox.ast-printer:print-expr expression))))
