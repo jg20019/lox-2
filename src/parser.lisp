@@ -1,17 +1,30 @@
 (uiop:define-package lox.parser
   (:use #:cl #:lox.ast)
-  (:import-from :lox.tokens :token-type :literal))
+  (:import-from :lox.errors :report-parse-error)
+  (:import-from :lox.tokens :token-type :literal)
+  (:export :new-parser :parse))
 
 (in-package :lox.parser)
 
 (defclass parser ()
   ((tokens :initarg :tokens
-	   :reader tokens)
-   (current :initform 0
-	    :accessor current)))
+	   :accessor tokens)
+   (previous :initform nil
+	     :accessor previous)))
 
-(defun new-parser (&key tokens)
+(define-condition lox-parse-error (error) ())
+
+(defmethod current ((p parser))
+  (first (tokens p)))
+
+(defun new-parser (tokens)
   (make-instance 'parser :tokens tokens))
+
+(defmethod parse ((p parser))
+  (handler-case
+      (expression p)
+    (lox-parse-error (c)
+      nil)))
 
 (defmethod expression ((p parser))
   (equality p))
@@ -35,7 +48,8 @@
 	    (right (term p)))
 	(setf expr (binary-expr :left expr
 				:operator op
-				:right right))))))
+				:right right))))
+    expr))
 
 (defmethod term ((p parser))
   (let ((expr (factor p)))
@@ -45,7 +59,8 @@
 	    (right (factor p)))
 	(setf expr (binary-expr :left expr
 				:operator op
-				:right right))))))
+				:right right))))
+    expr))
 
 (defmethod factor ((p parser))
   (let ((expr (unary p)))
@@ -55,7 +70,8 @@
 	    (right (unary p)))
 	(setf expr (binary-expr :left expr
 				:operator op
-				:right right))))))
+				:right right))))
+    expr))
 
 (defmethod unary ((p parser))
   (if (match p :bang :minus)
@@ -74,27 +90,44 @@
 	((match p :left-paren)
 	 (let ((expr (expression p)))
 	   (consume p :right-paren "Expect ')' after expression")
-	   (grouping-expr :expression expr)))))
+	   (grouping-expr :expression expr)))
+	(t (error (lox-parse-error (peek p) "Expect expression.")))))
 
 (defmethod match ((p parser) &rest token-types)
   (and (some #'(lambda (token-type) (check p token-type)) token-types)
        (advance p)))
 
+(defmethod consume ((p parser) token-type message)
+  (if (check p token-type)
+      (advance p)
+      (error (lox-parse-error (peek p) message))))
+
+(defun lox-parse-error (token message)
+  (report-parse-error token message)
+  (make-condition 'parse-error))
+
+(defmethod synchronize ((p parser))
+  (advance p)
+  (iterate:iterate
+    (iterate:while (not (at-end? p)))
+    (when (eql (token-type (previous p)) :semicolon)
+      (return-from synchronize))
+    (case (token-type (peek p))
+      (:class :fun :var :for :if :while :print :return) (return-from synchronize))
+    (advance p)))
+  
 (defmethod check ((p parser) token-type)
   (unless (at-end? p)
     (eql (token-type (peek p)) token-type)))
 
 (defmethod advance ((p parser))
-  (unless (at-end? p) (incf (current p)))
+  (unless (at-end? p)
+    (setf (previous p) (current p))
+    (setf (tokens p) (rest (tokens p))))
   (previous p))
 
 (defmethod at-end? ((p parser))
   (eql (token-type (peek p)) :eof))
 
 (defmethod peek ((p parser))
-  (aref (tokens p) (current p)))
-
-(defmethod previous ((p parser))
-  (aref (tokens p) (- (current p) 1)))
-
-
+  (current p))
