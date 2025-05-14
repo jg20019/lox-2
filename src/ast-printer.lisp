@@ -1,5 +1,6 @@
 (uiop:define-package lox.ast-printer
-  (:use #:cl))
+  (:use #:cl)
+  (:export :print-expr))
 
 (in-package #:lox.ast-printer)
 
