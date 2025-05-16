@@ -34,8 +34,8 @@
 
 (defun truthy? (x)
   (cond
-    ((listp x) t)			; empty list should be truthy
-    ((null x) nil)			; null is false
-    ((eql :true x) t)			; true is true
-    ((eql :false x) nil)		; false is false
-    (t t)))              ; everything else is true
+    ((and (consp x) (listp x)) t)   ; empty list should be truthy
+    ((null x) nil)		    ; null is false
+    ((eql :true x) t)		    ; true is true
+    ((eql :false x) nil)	    ; false is false
+    (t t)))                         ; everything else is true
