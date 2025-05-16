@@ -75,8 +75,8 @@
       (#\* (add-token s :star))
       (#\! (add-token s (if (match s #\=) :bang-equal :bang)))
       (#\= (add-token s (if (match s #\=) :equal-equal :equal)))
-      (#\< (add-token s (if (match s #\=) :less-equal :equal)))
-      (#\> (add-token s (if (match s #\=) :greater-equal :equal)))
+      (#\< (add-token s (if (match s #\=) :less-equal :less)))
+      (#\> (add-token s (if (match s #\=) :greater-equal :greater)))
       (#\/ (if (match s #\/)
 	       (iterate:iterate
 		 (iterate:while (and (not (at-end? s)) (char/= (peek s) #\Newline)))
