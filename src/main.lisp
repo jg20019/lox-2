@@ -9,7 +9,9 @@
 		:scan-tokens)
   (:import-from :lox.parser
 		:new-parser
-		:parse))
+		:parse)
+  (:import-from :lox.interpreter
+		:evaluate))
 
 (in-package #:lox)
 
@@ -40,4 +42,4 @@
     ;; Stop if there was a syntax error
     (when *had-error* (return-from run))
 
-    (format t "~a~%" (lox.ast-printer:print-expr expression))))
+    (format t "~a~%" (evaluate expression))))

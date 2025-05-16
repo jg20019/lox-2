@@ -82,8 +82,8 @@
       (primary p)))
 
 (defmethod primary ((p parser))
-  (cond ((match p :false) (literal-expr :value :f))
-	((match p :true) (literal-expr :value :t))
+  (cond ((match p :false) (literal-expr :value :false))
+	((match p :true) (literal-expr :value :true))
 	((match p :nil) (literal-expr :value nil))
 	((match p :number :string)
 	 (literal-expr :value (literal (previous p))))
