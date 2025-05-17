@@ -5,11 +5,17 @@
    :*had-error*
    :lox-error
    :report-parse-error
-   :report))
+   :report
+
+   ;; runtime errors
+   :*had-runtime-error*
+   :lox-runtime-error
+   :run-time-error))
 
 (in-package #:lox.errors)
 
 (defparameter *had-error* nil)
+(defparameter *had-runtime-error* nil)
 
 (defun lox-error (line message)
   (report line "" message))
@@ -26,3 +32,16 @@
    "[line ~a] Error ~a: ~a" line where message)
   (finish-output)
   (setf *had-error* t))
+
+(define-condition run-time-error (error)
+  ((token :initarg :token
+	  :reader token)
+   (message :initarg :message
+	    :reader message)))
+
+(defmethod print-object ((condition run-time-error) stream)
+  (format stream "~A" (message condition)))
+
+(defun lox-runtime-error (e)
+  (format *error-output* "~a~%[line ~a]~%" (message e) (line (token e)))
+  (setf *had-runtime-error* t))

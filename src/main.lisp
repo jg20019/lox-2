@@ -2,6 +2,7 @@
   (:use #:cl)
   (:import-from :lox.errors
 		:*had-error*
+		:*had-runtime-error*
 		:lox-error
 		:report)
   (:import-from :lox.scanner
@@ -11,7 +12,8 @@
 		:new-parser
 		:parse)
   (:import-from :lox.interpreter
-		:evaluate))
+		:new-interpreter
+		:interpret))
 
 (in-package #:lox)
 
@@ -25,13 +27,15 @@
 
 (defun run-file (path)
   (run (uiop:read-file-string path))
-  (when *had-error* :error))
+  (when (or *had-error* *had-runtime-error*) :error))
 
 (defun run-prompt ()
   (format t "> ")
   (let ((line (read-line *standard-input* nil nil)))
     (when line
       (run line))))
+
+(defparameter *interpreter* (new-interpreter))
 
 (defun run (source)
   (let* ((scanner (new-scanner source))
@@ -42,4 +46,4 @@
     ;; Stop if there was a syntax error
     (when *had-error* (return-from run))
 
-    (format t "~a~%" (evaluate expression))))
+    (format t "~a~%" (interpret *interpreter* expression))))
