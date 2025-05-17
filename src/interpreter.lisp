@@ -26,7 +26,7 @@
   (value expr))
 
 (defmethod evaluate ((expr grouping-expr))
-  (evaulate (expression expr)))
+  (evaluate (expression expr)))
 
 (defmethod evaluate ((expr unary-expr))
   (let ((right (evaluate (right expr))))
