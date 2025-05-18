@@ -100,13 +100,14 @@
 
 (defmethod synchronize ((p parser))
   (advance p)
-  (iterate:iterate
-    (iterate:while (not (at-end? p)))
-    (when (eql (token-type (previous p)) :semicolon)
-      (return-from synchronize))
-    (case (token-type (peek p))
-      (:class :fun :var :for :if :while :print :return) (return-from synchronize))
-    (advance p)))
+  (block nil
+    (iterate:iterate
+      (iterate:while (not (at-end? p)))
+      (when (eql (token-type (previous p)) :semicolon)
+	(return))
+      (case (token-type (peek p))
+	(:class :fun :var :for :if :while :print :return) (return))
+      (advance p))))
   
 (defmethod check ((p parser) token-type)
   (unless (at-end? p)
