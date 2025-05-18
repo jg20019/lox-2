@@ -14,13 +14,16 @@
 (defun new-interpreter ()
   (make-instance 'interpreter ))
 
-(defmethod interpret ((i interpreter) expression)
+(defmethod interpret ((i interpreter) statements)
   (handler-case
-      (let ((value (evaluate expression)))
-	(format t "~a~%" (stringify value)))
+      (iterate:iterate
+	(iterate:for stmt in statements)
+	(execute i stmt))
     (run-time-error (e)
       (lox-runtime-error e))))
 
+(defmethod execute ((i interpreter) stmt)
+  (evaluate stmt))
 
 (defmethod evaluate ((expr literal-expr))
   (value expr))
@@ -82,12 +85,20 @@
       (:equal-equal
        (lox-boolean (equal? left right))))))
 
+(defmethod evaluate ((stmt expression-stmt))
+  (evaluate (expression stmt))
+  nil)
+
+(defmethod evaluate ((stmt print-stmt))
+  (let ((value (evaluate (expression stmt))))
+    (format t "~a~%" (stringify value))))
+
 (defun truthy? (x)
   (cond
-    ((and (consp x) (listp x)) t)   ; empty list should be truthy
-    ((null x) nil)		    ; null is false
-    ((eql :true x) t)		    ; true is true
-    ((eql :false x) nil)	    ; false is false
+    ((and (consp x) (listp x)) t)	; empty list should be truthy
+    ((null x) nil)			; null is false
+    ((eql :true x) t)			; true is true
+    ((eql :false x) nil)		; false is false
     (t t)))                         ; everything else is true
 
 (defun equal? (a b)

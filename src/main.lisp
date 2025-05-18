@@ -41,9 +41,12 @@
   (let* ((scanner (new-scanner source))
 	 (tokens (scan-tokens scanner))
 	 (parser (new-parser tokens))
-	 (expression (parse parser)))
+	 (statements (parse parser)))
 
     ;; Stop if there was a syntax error
     (when *had-error* (return-from run))
 
-    (format t "~a~%" (interpret *interpreter* expression))))
+    (interpret *interpreter* statements)))
+
+;; run an example file
+;; (run-file (asdf:system-relative-pathname :lox #p"src/examples/program1.lox") )
