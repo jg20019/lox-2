@@ -20,10 +20,43 @@
 
 (defmethod parse ((p parser))
   (handler-case
+      (iterate:iterate
+	(iterate:while (not (at-end? p)))
+	(iterate:collect (statement p)))
+    (lox-parse-error ()
       nil)))
 
 (defmethod expression ((p parser))
   (equality p))
+
+(defmethod lox-declaration ((p parser))
+  (handler-case 
+      (cond ((match p :var) (var-declaration p))
+	    (t (statement p)))
+    (lox-parse-error ()
+      (synchronize p)
+      nil)))
+
+(defmethod var-declaration ((p parser))
+  (let ((name (consume p :identifier "Expect variable name."))
+	(initializer (when (match p :equal)
+		       (expression p))))
+    (consume p :semicolon "Expect ';' after variable declaration.")
+    (var-stmt :name name :initializer initializer)))
+
+(defmethod statement ((p parser))
+  (cond ((match p :print) (print-statement p))
+	(t (expression-statement p))))
+
+(defmethod print-statement ((p parser))
+  (let ((value (expression p)))
+    (consume p :semicolon "Expect ';' after value.")
+    (print-stmt :expression value)))
+
+(defmethod expression-statement ((p parser))
+  (let ((expr (expression p)))
+    (consume p :semicolon "Expect ';' after expression.")
+    (expression-stmt :expression expr)))
 
 (defmethod equality ((p parser))
   (let ((expr (comparison p)))
@@ -83,6 +116,8 @@
 	((match p :nil) (literal-expr :value nil))
 	((match p :number :string)
 	 (literal-expr :value (literal (previous p))))
+	((match p :identifier)
+	 (variable-expr :name (previous p)))
 	((match p :left-paren)
 	 (let ((expr (expression p)))
 	   (consume p :right-paren "Expect ')' after expression")
