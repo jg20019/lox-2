@@ -44,13 +44,19 @@
   (unless (and (numberp left) (numberp right))
     (error 'run-time-error :token operator :message "Operands must be numbers.")))
 
+(defun check-divisor (operator divisor)
+  (when (zerop divisor)
+    (error 'run-time-error :token operator :message "Cannot divide by zero")))
 
 (defmethod evaluate ((expr binary-expr))
   (let ((left (evaluate (left expr)))
 	(right (evaluate (right expr))))
     (case (lox.tokens:token-type (operator expr))
       (:minus (check-number-operands (operator expr) left right) (- left right))
-      (:slash (check-number-operands (operator expr) left right) (/ left right))
+      (:slash
+       (check-number-operands (operator expr) left right)
+       (check-divisor (operator expr) right)
+       (/ left right))
       (:star  (check-number-operands (operator expr) left right) (* left right))
       (:plus (cond ((and (numberp left) (numberp right))
 		    (+ left right))
