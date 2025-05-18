@@ -41,4 +41,10 @@
   (binary (left operator right))
   (grouping (expression))
   (literal (value))
-  (unary (operator right)))
+  (unary (operator right))
+  (variable (name)))
+
+(define-ast stmt
+  (expression (expression))
+  (print (expression))
+  (var (name initializer)))

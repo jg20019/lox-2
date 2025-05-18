@@ -1,6 +1,6 @@
 (uiop:define-package lox.parser
   (:use #:cl #:lox.ast)
-  (:import-from :lox.errors :report-parse-error)
+  (:import-from :lox.errors :lox-parse-error)
   (:import-from :lox.tokens :token-type :literal)
   (:export :new-parser :parse))
 
@@ -12,8 +12,6 @@
    (previous :initform nil
 	     :accessor previous)))
 
-(define-condition lox-parse-error (error) ())
-
 (defmethod current ((p parser))
   (first (tokens p)))
 
@@ -22,8 +20,6 @@
 
 (defmethod parse ((p parser))
   (handler-case
-      (expression p)
-    (lox-parse-error (c)
       nil)))
 
 (defmethod expression ((p parser))
@@ -101,10 +97,6 @@
   (if (check p token-type)
       (advance p)
       (error (lox-parse-error (peek p) message))))
-
-(defun lox-parse-error (token message)
-  (report-parse-error token message)
-  (make-condition 'parse-error))
 
 (defmethod synchronize ((p parser))
   (advance p)

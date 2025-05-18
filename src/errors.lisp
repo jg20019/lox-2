@@ -20,11 +20,6 @@
 (defun lox-error (line message)
   (report line "" message))
 
-(defun report-parse-error (token message)
-  (with-slots (line lexeme token-type) token
-    (if (eql token-type :eof)
-	(report line " at end " message)
-	(report line (format nil " at '~a'" lexeme) message))))
 
 (defun report (line where message)
   (format
@@ -32,6 +27,18 @@
    "[line ~a] Error ~a: ~a" line where message)
   (finish-output)
   (setf *had-error* t))
+
+(defun report-parse-error (token message)
+  (with-slots (line lexeme token-type) token
+    (if (eql token-type :eof)
+	(report line " at end " message)
+	(report line (format nil " at '~a'" lexeme) message))))
+
+(define-condition lox-parse-error (error) ())
+
+(defun lox-parse-error (token message)
+  (report-parse-error token message)
+  (make-condition 'parse-error))
 
 (define-condition run-time-error (error)
   ((token :initarg :token
